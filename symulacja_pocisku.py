@@ -10,12 +10,13 @@ from tkinter import Tk, Label, Button, Entry
 import matplotlib.pyplot as plt
 import numpy as np
 import matplotlib.animation as animation
-import math
+
 
 #tworzenie okna aplikacji
 root = Tk()
+root.title("Symulacja Pocisku 1.0")
 #tworzenie tytulu
-myLabel = Label(root, text="Symulacja pocisku v0.2")
+myLabel = Label(root, text="Symulacja pocisku")
 #wyswietlanie okien ze zmiennymi okienkowymi
 myLabel.grid(row=0, column=1)
 #definiowanie okna do pobierania danych
@@ -64,16 +65,16 @@ def stworz_przeszkode ():
 #tworzenie przycisku
 dodaj_przeszkode=Button(root,text="Dodaj przeszkode", command=lambda: stworz_przeszkode())
 dodaj_przeszkode.grid(row = 1,column =2)
-
+#definiowanie funkcji przycisku
 def przycisk_ok():
     global j
-    
+    #pobieranie danych jako zmienne
     v0=wejscie_v0.get()
     v0=float(v0)
     kat=wejscie_kat.get()
     kat=float(kat)
     katr=kat*np.pi/180
-    
+    #definiowanie wykresu oraz wzoru funkcji
     fig, ax = plt.subplots()
     g = 9.8
     theta = katr
@@ -81,49 +82,59 @@ def przycisk_ok():
     t = np.arange(0, 0.1, 0.01)
     x = np.arange(0, 0.1, 0.01)
     line, = ax.plot(x, v0 * np.sin(theta) * x - (0.5) * g * x**2)
-    y_max=(v0**2)*(math.sin(katr)**2)/(2*g)
+    y_max=(v0**2)/(2*g)
     print(y_max)
-    
+    #obliczanie zasiegu
     czas=2*v0*np.sin(katr)/9.81
     czas=float(czas)
     zasieg=v0*np.cos(katr)*czas
     zasieg=float(zasieg)
-    
+    #sprawdzanie czy wszytsko dziala poprawnie - czy dane zostaly pomyslnie wprowadzone
     iteracja=0
-    
-    zasieg=(v0*v0)/g*np.sin(2*katr)
-    def animate(i):
-        """change the divisor of i to get a faster (but less precise) animation """
-        line.set_xdata(v0 * np.cos(theta) * (t + i /100.0))
-        line.set_ydata(v0 * np.sin(theta) * (x + i /100.0) - (0.5) * g * (x + i / 100.0)**2)  
-        return line,
-    
-    
-    plt.axis([0.0, zasieg, 0.0, y_max])
-    ax.set_autoscale_on(False)
-    
-    ani = animation.FuncAnimation(fig, animate, np.arange(1, 1000))
-    plt.show()
-    writergif = animation.PillowWriter(fps=24)
-    ani.save('wykres.gif',writer=writergif)
-    
     while iteracja<j-1:
         print(wysokosci[iteracja].get(),' ')
         print(odleglosci[iteracja].get())
         iteracja=iteracja+1
         
+    zasieg=(v0*v0)/g*np.sin(2*katr)
+    #funkcja animujaca
+    def animate(i):
+        """zmien i by otrzymac szybsza (ale mniej precyzyjna) animacje """
+        line.set_xdata(v0 * np.cos(theta) * (t + i /100.0))
+        line.set_ydata(v0 * np.sin(theta) * (x + i /100.0) - (0.5) * g * (x + i / 100.0)**2)  
+        return line,
     
-    '''
-    x = np.arange(0,zasieg)
-    y = x*math.tan(katr)-9.81*np.sqrt(x)/(2*math.sqrt(v0)*np.cos(math.sqrt(katr)))
-    plt.plot(x,y)
+    #ograniczanie wykresu
+    plt.axis([0.0, zasieg, 0.0, y_max])
+    ax.set_autoscale_on(False)
+    
+    plt.xlabel("Wysokosc (m)")
+    plt.ylabel("Odleglosc (m)")
+    
+    print (zasieg)
+    #ustalanie lacznej liczby klatek i wywolanie zamiaru animacji
+    ani = animation.FuncAnimation(fig, animate, np.arange(1, 1000))
+    #badanie przeszkod
+    for i in range (j-1):
+        #ustawianie odpowiedniego koloru preszkod - trafiona - czerwona, nietrafiona - zielona
+        if (( float(odleglosci[i].get())*np.tan(katr)-(g/(2*((v0)**2)*(np.cos(katr))**2))*((float(odleglosci[i].get()))**2)) < (float(wysokosci[i].get()))):
+            plt.vlines(float(odleglosci[i].get()),0,float(wysokosci[i].get()),colors='r')
+        if (( float(odleglosci[i].get())*np.tan(katr)-(g/(2*((v0)**2)*(np.cos(katr))**2))*((float(odleglosci[i].get()))**2)) >= (float(wysokosci[i].get()))):
+            plt.vlines(float(odleglosci[i].get()),0,float(wysokosci[i].get()),colors='g')
+    #przedstawienie wykresu
     plt.show()
-'''
+    #ustalenie sposobu zapisu i ilosci klatek na sekunde
+    writergif = animation.PillowWriter(fps=24)
+    ani.save('wykres.gif',writer=writergif)
+    
+    #sam juz nie wiem
     fig, ax = plt.subplots()
+    #zakonczenie funkcji
     return None
-
+#definiowanie funkcji przycisku oblicz i jego pozycji
 oblicz_trajektorie=Button(root, text="Oblicz", command=przycisk_ok)
 oblicz_trajektorie.grid(row=1,column=3)
 
-#jakas kluczowa rzecz
+#pozostaw okno wlaczone
 root.mainloop() 
+
